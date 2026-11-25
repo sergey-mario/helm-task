@@ -1,6 +1,6 @@
 secretName: db-credentials
 frontend:
-  replicaCount: 2
+  replicaCount: 3
   image:
     repository: nginx
     tag: "1.25"
