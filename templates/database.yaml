@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-data
+  namespace: {{ $.Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+  namespace: {{ $.Release.Namespace }}
+spec:
+  replicas: {{ .Values.database.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      serviceAccountName: database
+      containers:
+        - name: postgres
+          image: {{ .Values.database.image.repository}}:{{ .Values.database.image.tag }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.secretName }}, key: username}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.secretName }}, key: password}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec: {command: ["pg_isready", "-U", "{{.Values.database.user }}" ]}
+          livenessProbe:
+            exec: {command: ["pg_isready", "-U", "{{.Values.database.user }}"]}
+            initialDelaySeconds: 15
+          resources:
+            {{- toYaml .Values.database.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: database-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: {{ $.Release.Namespace }}
+spec:
+  selector:
+    app: database
+  ports:
+    - port: 5432
+      targetPort: 5432

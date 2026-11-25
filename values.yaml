@@ -1,0 +1,31 @@
+secretName: db-credentials
+frontend:
+  replicaCount: 2
+  image:
+    repository: nginx
+    tag: "1.25"
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {cpu: 200m, memory: 128Mi}
+backend:
+  replicaCount: 2
+  image:
+    repository: adminer
+    tag: "4"
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 200m, memory: 128Mi}
+database:
+  replicaCount: 1
+  image:
+    repository: postgres
+    tag: "16"
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: 500m, memory: 512Mi}
+  storage: 1Gi
+  user: app
+rbac:
+  enabled: true
+serviceAccounts: ["frontend", "backend", "database"]
+

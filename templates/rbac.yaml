@@ -1,0 +1,48 @@
+{{- range .Values.serviceAccounts }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ . }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ . }}
+{{- end }}
+{{- if .Values.rbac.enabled }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: reviewer
+  namespace: {{ $.Release.Namespace }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: reviewer-readonly
+  namespace: {{ $.Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: reviewer-readonly
+  namespace: {{ $.Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: reviewer
+    namespace: {{ $.Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: reviewer-readonly
+{{- end }}
