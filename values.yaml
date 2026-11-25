@@ -3,7 +3,7 @@ frontend:
   replicaCount: 3
   image:
     repository: nginx
-    tag: "1.25"
+    tag: "000"
   resources:
     requests: {cpu: 10m, memory: 32Mi}
     limits: {cpu: 200m, memory: 128Mi}
